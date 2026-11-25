@@ -221,3 +221,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ==========================================
+# Isolamento de Dados Experimentais e Builds
+# ==========================================
+# Permite rastrear pastas de dados, mas ignora arquivos gerados
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+
+# Ignora saídas temporárias de ensaios e logs
+sim-ns3/ns-3.48/test_traces/
+*.log
+*.pcap
+*.tr
+buildings.txt
+
+# Arquivos temporários e artefatos de zip
+zip/
+*.zip
+*.tar.gz
+
+# Ambientes virtuais e caches Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
