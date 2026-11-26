@@ -492,9 +492,13 @@ A atividade **`[EP-01] - Tarefa 1.3`** e o **Épico 01** são considerados forma
 # Especificação Técnica de Execução: Estruturação de Diretórios em Arquitetura Hexagonal
 
 * **Identificador no Backlog:** `[EP-02] - Tarefa 1.4`
+
 * **Épico Vinculado:** EP-02 — Governança SDD e Especificação Técnica
+
 * **Sprint:** Sprint 1 (23/11/2026 a 29/11/2026)
+
 * **Status:** Pronto para Execução e Homologação
+
 * **Objetivo:** Estabelecer a topologia de diretórios e pacotes do projeto no repositório Git local (`/home/bira/github/projetos/lorawan-ns3-perf-eval`), materializando os conceitos de **Arquitetura Hexagonal (*Ports & Adapters*)**, **Clean Code**, **SOLID** e separação estrita de responsabilidades entre o motor de eventos discretos em C++ (`sim-ns3`) e o subsistema analítico/orquestrador em Python (`src/core`, `src/ports`, `src/adapters`).
 
 ## 1. Diagnóstico do Estado Atual do Repositório
@@ -502,11 +506,17 @@ A atividade **`[EP-01] - Tarefa 1.3`** e o **Épico 01** são considerados forma
 Conforme a inspeção realizada em `/home/bira/github/projetos/lorawan-ns3-perf-eval`, o repositório já possui a infraestrutura base provisionada:
 
 * **Controle de Versão:** Repositório Git ativo (`.git/`, `.gitignore`, `LICENSE`, `README.md`).
+
 * **Gerenciamento Python:** Configurado via `uv` (`pyproject.toml`, `.python-version`, `uv.lock`, `.venv/`).
+
 * **Núcleo ns-3:** Estruturado e homologado (`sim-ns3/` contendo o ns-3.48 e módulo LoRaWAN 0.3.7).
+
 * **Documentação:** Diretório `docs/` existente.
+
 * **Módulos Pendentes de Estruturação Interna:** 
+
   * O diretório `src/` precisa ser decomposto nas camadas hexagonais (`core/`, `ports/`, `adapters/`).
+
   * Devem ser criados os diretórios de suporte: `configs/` (para contratos YAML/JSON), `data/` (para persistência isolada de métricas brutas e processadas) e `tests/` (pirâmide de testes unitários e de integração com `pytest`).
 
 ## 2. Mapa Arquitetural de Diretórios
@@ -677,7 +687,7 @@ Execute o teste com o interpretador ativo do ambiente virtual:
 uv run pytest
 ```
 
-* **Resultado Esperado:** O `pytest` deve localizar o arquivo e emitir `1 passed in X.XXs`.
+* **Resultado Esperado:** O `pytest` deve localizar o arquivo e emitir `1 passed in 0.96s`.
 
 ### Passo 6: Registro e Versionamento no Git
 
@@ -718,10 +728,15 @@ A atividade **`[EP-02] - Tarefa 1.4`** é considerada **Concluída (Done)** quan
 # Especificação Técnica de Execução: Template Oficial SBC e Redação do Esqueleto do Relatório Parcial
 
 * **Identificador no Backlog:** `[EP-03] - Tarefa 1.5`
+
 * **Épico Vinculado:** EP-03 — Proposta / Relatório Parcial (10 págs SBC)
+
 * **Sprint Vinculada:** Sprint 1 (23/11/2026 a 29/11/2026)
+
 * **Marco Acadêmico:** Entrega do Relatório Parcial em **08/12/2026** (Fim da Sprint 2)
+
 * **Restrição Normativa:** **Exatamente 10 páginas** no formato da Sociedade Brasileira de Computação (SBC), em conformidade com as diretrizes da fonte `trcsf26-2v1.pdf`.
+
 * **Objetivo da Tarefa:** Configurar o pacote oficial da SBC no ambiente LaTeX local (`docs/sbc-papers/proposta-parcial/`), estabelecer a folha de estilo e a bibliografia BibTeX, e redigir o texto das **Seções 1 e 2** (Introdução contextualizada e Definição formal do Problema com hipóteses experimentais), preparando o documento para a complementação das Seções 3, 4 e 5 durante a Sprint 2.
 
 ## 1. Distribuição de Páginas e Metas Editoriais da Proposta (10 Páginas SBC)
@@ -753,8 +768,8 @@ wget https://www.sbc.org.br/wp-content/uploads/2024/07/modelosparapublicaodearti
 
 # 3. Descompacte o pacote e extraia a classe de estilo (sbc.bst e sbc-template.sty)
 unzip -q sbc_template.zip
-cp modelosparapublicaodeartigos/LaTeX/sbc.bst .
-cp modelosparapublicaodeartigos/LaTeX/sbc-template.sty .
+cp modelosparapublicaodeartigos/Template_SBC/template-latex/sbc.bst .
+cp modelosparapublicaodeartigos/Template_SBC/template-latex/sbc-template.sty .
 
 # 4. Limpe os temporários do zip
 rm -rf sbc_template.zip modelosparapublicaodeartigos
@@ -1013,8 +1028,6 @@ Com isso, a **Sprint 1 está 100% finalizada**. Na **Sprint 2 (30/11 a 07/12/202
 
 * **Entregável da Sprint:** Simulador compilado e executando; template LaTeX SBC estruturado; repositório configurado.
 
-
-
 Links úteis
 
 https://github.com/signetlabdei/lorawan
@@ -1110,3 +1123,8 @@ cat src/lorawan/NS3-VERSION
 ```
 
 release ns-3.38
+
+
+
+
+
