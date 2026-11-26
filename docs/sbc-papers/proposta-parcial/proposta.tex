@@ -1,0 +1,98 @@
+\documentclass[12pt]{article}
+
+\usepackage{sbc-template}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{microtype}
+
+\sloppy
+
+\title{Avaliação de Desempenho e Limites de Escalabilidade de Redes LoRaWAN sob Condições de Interferência no Simulador ns-3}
+
+\author{Ubirajara A. Silva\inst{1}}
+
+\address{Programa de Pós-Graduação em Engenharia Eletrônica (PEL/DETEL/FEN)\\
+  Universidade do Estado do Rio de Janeiro (UERJ) -- Rio de Janeiro, RJ -- Brasil
+  \email{ubirajara@eng.uerj.br}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper presents the research proposal for performance evaluation and scalability analysis of LoRaWAN networks using discrete-event simulation in ns-3. As Internet of Things (IoT) deployments grow in smart cities, the ALOHA-based medium access control encounters severe packet collisions and co-channel interference. This work investigates the impact of network density, spreading factor allocation, and regulatory duty cycles on packet delivery ratio (PDR) and throughput. A rigorous performance evaluation methodology based on Raj Jain's framework is established, integrating a Hexagonal Architecture orchestrator in Python and C++ engine extensions under Specification-Driven Development (SDD).
+\end{abstract}
+
+\begin{resumo}
+Este documento apresenta a proposta de pesquisa para avaliação de desempenho e análise dos limites de escalabilidade de redes LoRaWAN utilizando simulação de eventos discretos no ns-3. Com a massificação de dispositivos na Internet das Coisas (IoT), o mecanismo de acesso ao meio desprovido de detecção de portadora (ALOHA puro) sofre degradação acentuada devido a colisões e interferência co-canal. Este trabalho investiga o impacto da densidade de dispositivos, da estratégia de alocação de Fatores de Espalhamento (SF) e do controle de duty cycle sobre a taxa de entrega de pacotes (PDR) e a vazão agregada. Define-se uma metodologia estrita baseada no arcabouço de Raj Jain, associada a uma plataforma orquestradora em Arquitetura Hexagonal (Python/C++) governada por Specification-Driven Development (SDD).
+\end{resumo}
+
+% =========================================================================
+% SEÇÃO 1: INTRODUÇÃO E JUSTIFICATIVA
+% =========================================================================
+\section{Introdução e Justificativa}
+\label{sec:introducao}
+
+A consolidação do paradigma da Internet das Coisas (\textit{Internet of Things} -- IoT) impôs demandas arquiteturais singulares sobre a infraestrutura de telecomunicações sem fio \cite{tanenbaum2021redes}. Diferentemente das redes locais sem fio convencionais voltadas para taxas elevadas de transmissão em curtas distâncias (como a família IEEE 802.11) ou das redes móveis celulares orientadas à mobilidade contínua, uma vasta gama de aplicações urbanas e industriais requer a transmissão esparsa de pequenos volumes de dados por nós de baixíssimo custo energeticamente autônomos por anos \cite{stallings2005wireless, adelantado2017understanding}.
+
+Nesse contexto emergiram as tecnologias de redes de longa distância e baixa potência (\textit{Low Power Wide Area Networks} -- LPWAN). Dentre os padrões abertos consolidados no mercado e na academia, destaca-se o \textbf{LoRaWAN}, concebido pela \textit{LoRa Alliance} \cite{lorawan_spec_v103}. O LoRaWAN adota na camada física a modulação proprietária LoRa (\textit{Long Range}), baseada no espalhamento espectral por chaveamento de frequência contínuo (\textit{Chirp Spread Spectrum} -- CSS). Essa técnica permite robustez contra atenuação severa e desvanecimento multitrajeto, operando tipicamente nas faixas não licenciadas \textit{Industrial, Scientific and Medical} (ISM) em frequências sub-GHz (868~MHz na Europa e 915~MHz nas Américas) \cite{magrin2017performance}.
+
+A camada de controle de acesso ao meio (MAC) do LoRaWAN opera segundo uma topologia em estrela de estrelas (\textit{star-of-stars}), na qual nós finais (\textit{End Devices} -- EDs) comunicam-se em salto único diretamente com um ou múltiplos \textit{Gateways} (GWs). Os gateways, por sua vez, atuam como pontes bidirecionais transparentes, reencaminhando os quadros de rádio encapsulados em conexões de alta capacidade (IP/Ethernet) para um Servidor de Rede centralizado (\textit{Network Server} -- NS) \cite{lorawan_spec_v103}. Na classe fundamental de operação (Classe A), o acesso ao canal de subida (\textit{uplink}) ocorre sob o princípio de contenção assíncrona do protocolo ALOHA puro: o dispositivo transmite imediatamente no instante em que sua carga útil é gerada, abrindo em seguida duas janelas temporais estritas de recepção (RX1 e RX2) para eventuais confirmações ou comandos descendentes (\textit{downlink}) \cite{adelantado2017understanding}.
+
+A relevância e justificativa deste trabalho residem no fato de que, embora a modulação LoRa ofereça quase-ortogonalidade entre seus seis fatores de espalhamento (\textit{Spreading Factors} -- SF7 a SF12), a ausência de mecanismos de escuta de portadora (como o CSMA/CA) torna o sistema extremamente vulnerável à saturação à medida que a densidade de transmissores se aproxima de dezenas de milhares de dispositivos por gateway \cite{bor2016lora}. Além disso, regulamentações governamentais de espectro impõem restrições de tempo de ocupação no ar (\textit{duty cycle} máximo de 1\% por sub-banda), o que constrange severamente a capacidade do canal e os algoritmos de adaptação de taxa (\textit{Adaptive Data Rate} -- ADR) \cite{magrin2017performance}.
+
+Conforme as diretrizes da disciplina Redes de Computadores Sem Fio (PEL/DETEL/FEN -- UERJ, período 2026/2), este projeto atende formalmente à categoria de projetos de avaliação de desempenho por simulação computacional. A pesquisa apoia-se no simulador de eventos discretos \textbf{ns-3} (versão 3.48), acoplado ao módulo oficial aberto \texttt{lorawan} (SignetLab/DEI). O desenvolvimento de extensões de protocolo não implementadas segue os padrões da engenharia de software de qualidade, empregando Desenvolvimento Orientado por Especificação (\textit{Specification-Driven Development} -- SDD), princípios SOLID, Clean Code e Arquitetura Hexagonal (\textit{Ports \& Adapters}) para desacoplamento entre o motor C++ e a plataforma analítica em Python.
+
+% =========================================================================
+% SEÇÃO 2: O PROBLEMA DE PESQUISA
+% =========================================================================
+\section{O Problema de Pesquisa}
+\label{sec:problema}
+
+O desafio central enfrentado em redes LPWAN diz respeito aos \textbf{limites de escalabilidade e confiabilidade da entrega de pacotes} em cenários massivos. A premissa de acesso aleatório do ALOHA puro, associada à longa duração dos pacotes no ar (\textit{Time-on-Air} -- ToA), gera uma probabilidade crescente de sobreposição temporal e espectral de sinais \cite{adelantado2017understanding, bor2016lora}. 
+
+\subsection{Degradação da Ortogonalidade e Colisões Co-Canal}
+A teoria de modulação LoRa postula que sinais transmitidos simultaneamente em uma mesma frequência central não sofrem interferência destrutiva mútua se modulados com Fatores de Espalhamento distintos ($SF_i \neq SF_j$). Contudo, em condições empíricas e simulações com modelos de rádio de alta fidelidade, os SFs exibem apenas uma \textit{quase-ortogonalidade}. A presença de um sinal concorrente de alta potência em $SF_{12}$ pode despolarizar e degradar a relação sinal-ruído-interferência (SINR) de uma transmissão próxima em $SF_7$, violando a premissa de isolamento perfeito \cite{bor2016lora}.
+
+Além disso, transmissões concorrentes no mesmo canal e no mesmo SF colidem fatalmente, a menos que a diferença de potência de recepção entre os sinais exceda o limiar do chamado \textbf{efeito de captura} (\textit{capture effect}). Nesse cenário, o pacote mais fraco é destruído, enquanto o mais forte pode, eventualmente, ser demodulado pelo gateway. Nós situados distantes da estação rádio-base operam historicamente com SFs mais elevados (maior tempo de integração e sensibilidade aumentada), resultando em tempos no ar de até dez vezes superiores aos nós próximos (operando em SF7), amplificando exponencialmente a janela de colisão global da rede \cite{magrin2017performance}.
+
+\subsection{Questões de Pesquisa (QP)}
+A formulação do problema traduz-se nas seguintes questões científicas investigadas neste estudo:
+\begin{itemize}
+    \item \textbf{QP-01:} Em que ponto de densidade de dispositivos (100 a 2000 nós) o mecanismo ALOHA do LoRaWAN atinge o colapso de vazão e degradação crítica da Taxa de Entrega de Pacotes (PDR)?
+    \item \textbf{QP-02:} De que maneira a alocação dinâmica de SF através de algoritmos de ADR atenua ou agrava o número de colisões co-canal em comparação com uma distribuição uniforme estática de SFs?
+    \item \textbf{QP-03:} Qual é o impacto isolado da restrição regulatória de \textit{duty cycle} (1\%) na ocorrência de descartes locais na fila MAC dos transmissores sob tráfego periódico contínuo?
+    \item \textbf{QP-04:} Como se comportam os índices de equidade de acesso à rede (\textit{Jain's Fairness Index}) entre nós localizados no raio interno da célula frente aos nós de borda?
+\end{itemize}
+
+\subsection{Hipóteses Experimentais}
+Com base no arcabouço quantitativo de Raj Jain \cite{jain1991art}, este estudo formula as seguintes hipóteses de trabalho a serem validadas experimentalmente no ns-3:
+\begin{itemize}
+    \item \textbf{Hipótese $H_1$:} A taxa de entrega de pacotes ($\mathrm{PDR}$) decresce de forma exponencial com o aumento linear da densidade de dispositivos finais sob alocação aleatória de SF, estabilizando-se em patamares inferiores a 40\% para populações superiores a 1000 nós em raio de 2~km.
+    \item \textbf{Hipótese $H_2$:} A utilização de estratégias dinâmicas de alocação baseadas na intensidade do sinal recebido (RSSI/ADR) promove um ganho estatisticamente significativo ($\alpha = 0{,}05$) de ao menos 20 pontos percentuais no PDR agregado em relação à alocação uniforme, decorrente do confinamento da maioria dos nós em fatores de espalhamento de baixo tempo no ar (SF7 e SF8).
+    \item \textbf{Hipótese $H_3$:} A conformidade estrita com o limite de 1\% de \textit{duty cycle} introduz uma taxa de descarte determinística por esgotamento de janela de tempo que mascara as perdas puramente atribuídas a colisões no canal de rádio.
+\end{itemize}
+
+% =========================================================================
+% SEÇÕES SUBSEQUENTES (ESTRUTURAÇÃO PREPARATÓRIA DA SPRINT 2)
+% =========================================================================
+\section{Revisão Bibliográfica e Levantamento das Soluções}
+\label{sec:revisao}
+\textit{[Seção a ser desenvolvida na Sprint 2 -- Meta: 2,5 páginas. Abordará os mecanismos de adaptação de taxa (ADR), modelagem de interferência co-canal em LPWAN e os recursos do módulo lorawan do ns-3].}
+
+\section{Metodologia Proposta para Avaliação de Desempenho}
+\label{sec:metodologia}
+\textit{[Seção a ser desenvolvida na Sprint 2 -- Meta: 2,5 páginas. Detalhará o desenho experimental segundo Raj Jain: variáveis independentes, métricas HB e LB, modelo de propagação urbana, controle de sementes e Arquitetura Hexagonal].}
+
+% =========================================================================
+% REFERÊNCIAS BIBLIOGRÁFICAS
+% =========================================================================
+\bibliographystyle{sbc}
+\bibliography{referencias}
+
+\end{document}

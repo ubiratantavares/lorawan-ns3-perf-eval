@@ -1,0 +1,42 @@
+\begin{thebibliography}{}
+
+\bibitem[lor 2018]{lorawan_spec_v103}
+ (2018).
+\newblock {\em {LoRaWAN} 1.0.3 Specification}.
+\newblock LoRa Alliance.
+\newblock Standard Document.
+
+\bibitem[Adelantado et~al. 2017]{adelantado2017understanding}
+Adelantado, F., Vilajosana, X., Tuset-Peiro, P., Martinez, B.,
+  Meli{\a}-Segu{\'\i}, J., and Watteyne, T. (2017).
+\newblock Understanding the limits of {LoRaWAN}.
+\newblock {\em IEEE Communications Magazine}, 55(9):34--40.
+
+\bibitem[Bor et~al. 2016]{bor2016lora}
+Bor, M., Roedig, U., Voigt, T., and Alonso, J.~M. (2016).
+\newblock Do {LoRa} low-power wide-area networks scale?
+\newblock pages 59--67.
+
+\bibitem[Jain 1991]{jain1991art}
+Jain, R. (1991).
+\newblock {\em The Art of Computer Systems Performance Analysis: Techniques for
+  Experimental Design, Measurement, Simulation, and Modeling}.
+\newblock John Wiley \& Sons, New York, USA.
+
+\bibitem[Magrin et~al. 2017]{magrin2017performance}
+Magrin, D., Centenaro, M., and Zanella, A. (2017).
+\newblock Performance evaluation of {LoRa} networks in a smart city scenario.
+\newblock {\em IEEE Transactions on Wireless Communications},
+  16(12):8147--8159.
+
+\bibitem[Stallings 2005]{stallings2005wireless}
+Stallings, W. (2005).
+\newblock {\em Wireless Communications \& Networks}.
+\newblock Pearson Prentice Hall, 2nd edition.
+
+\bibitem[Tanenbaum et~al. 2021]{tanenbaum2021redes}
+Tanenbaum, A.~S., Feamster, N., and Wetherall, D.~J. (2021).
+\newblock {\em Redes de Computadores}.
+\newblock Pearson, São Paulo, Brasil, 6ª edition.
+
+\end{thebibliography}
