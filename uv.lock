@@ -431,37 +431,41 @@ wheels = [
 name = "lorawan-ns3-perf-eval"
 version = "0.1.0"
 source = { editable = "." }
-
-[package.dev-dependencies]
-dev = [
+dependencies = [
     { name = "matplotlib" },
-    { name = "mdformat" },
-    { name = "mypy" },
     { name = "numpy" },
     { name = "pandas" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
     { name = "pyyaml" },
-    { name = "ruff" },
     { name = "scipy" },
     { name = "seaborn" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "mdformat" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
 [package.metadata]
+requires-dist = [
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pandas" },
+    { name = "pyyaml" },
+    { name = "scipy" },
+    { name = "seaborn" },
+]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "matplotlib" },
     { name = "mdformat" },
     { name = "mypy" },
-    { name = "numpy" },
-    { name = "pandas" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pyyaml" },
     { name = "ruff" },
-    { name = "scipy" },
-    { name = "seaborn" },
 ]
 
 [[package]]

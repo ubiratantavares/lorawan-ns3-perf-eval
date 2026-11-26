@@ -247,3 +247,21 @@ zip/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# ns-3: artefatos de build e saídas locais
+sim-ns3/*/build/
+sim-ns3/*/cmake-cache/
+sim-ns3/*/.lock-ns3_*
+sim-ns3/*/buildings.txt
+sim-ns3/*/test_traces/
+sim-ns3/*/__pycache__/
+sim-ns3/ns-3.41/
+
+# LaTeX: intermediários (manter .tex, .bib, .sty, .bst e o PDF final)
+docs/sbc-papers/**/*.aux
+docs/sbc-papers/**/*.bbl
+docs/sbc-papers/**/*.blg
+docs/sbc-papers/**/*.out
+docs/sbc-papers/**/*.toc
+docs/sbc-papers/**/*.fls
+docs/sbc-papers/**/*.fdb_latexmk
