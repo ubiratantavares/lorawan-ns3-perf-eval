@@ -8,7 +8,7 @@
 
 2. *[EP-01]* Clonar e compilar a distribuição do **ns-3** e integrar o módulo de simulação `lorawan`.
 
-3. *[EP-01]* Executar e validar o cenário de exemplo padrão (`lora-packet-tracker.cc`) para confirmar a compilação e a geração de traços.
+3. *[EP-01]* Executar e validar o cenário de exemplo padrão (`complete-network-example.cc`, que utiliza o `LoraPacketTracker`) para confirmar a compilação e a geração de traços.
 
 4. *[EP-02]* Criar o repositório Git com a estrutura de diretórios em Arquitetura Hexagonal (`/core`, `/ports`, `/adapters`, `/sim-ns3`, `/analysis`).
 
@@ -131,8 +131,9 @@ uv venv .venv --python 3.14
 # Ative o ambiente virtual
 source .venv/bin/activate
 
-# instalando dependências
-uv add --dev mypy ruff pytest pytest-cov mdformat numpy scipy pandas matplotlib seaborn yaml
+# instalando dependências de runtime (plataforma analítica) e de desenvolvimento
+uv add numpy scipy pandas matplotlib seaborn pyyaml
+uv add --dev mypy ruff pytest pytest-cov mdformat
 
 uv sync
 
@@ -173,7 +174,7 @@ echo "========================================"
 | **`gcc` / `g++`** | \\(\ge\\) 11.0 (C++17 nativo) | Compilação do motor ns-3 e modelos LoRaWAN |
 | **`cmake`** | \\(\ge\\) 3.22 | Sistema de configuração de build |
 | **`ninja`** | \\(\ge\\) 1.10 | Execução paralela de compilação em baixo nível |
-| **`python3`** | \\(\ge\\) 3.10 | Execução do orquestrador e processamento estatístico |
+| **`python3`** | \\(\ge\\) 3.14 (`requires-python` do `pyproject.toml`) | Execução do orquestrador e processamento estatístico |
 | **`python3-dev`** | Headers instalados | Suporte a bindings e bibliotecas numéricas nativas |
 
 ## 4. Critério de Aceitação / Definition of Done (DoD)
@@ -205,7 +206,7 @@ configurar o sistema de build baseado em **CMake/Ninja** e realizar a compilaç�
 
 O ns-3 adota o **CMake** como seu sistema oficial de configuração de build e o **Ninja** como o backend de compilação em baixo nível. O subsistema modular do ns-3 permite que 
 modelos de rede externos (como o módulo LoRaWAN desenvolvido pela Universidade de Pádua / Magrin et al.) sejam adicionados no diretório `contrib/` sem a necessidade de modificar 
-o repositório principal do simulador.
+o repositório principal do simulador. Neste projeto, entretanto, o módulo foi clonado em `src/lorawan` (decisão registrada em `docs/adr/001-versao-ns3-e-modulo-lorawan.md`); o CMake do ns-3 detecta módulos em ambos os diretórios.
 
 A organização de diretórios seguirá o padrão:
 
@@ -215,8 +216,8 @@ lorawan-ns3-perf-eval/
 │   └── ns-3.48/          # Árvore principal do ns-3 (versão estável)
 │     ├── build/             # Artefatos binários compilados (ignorado no Git)
 │     ├── src/               # Módulos nativos do ns-3 (wifi, lte, core, etc.)
-│     └── contrib/           # Extensões externas
-│     └── lorawan/       # Código-fonte do módulo LoRaWAN
+│     │   └── lorawan/       # Código-fonte do módulo LoRaWAN 0.3.7 (ver ADR-001)
+│     └── contrib/           # Extensões externas (não utilizado neste projeto)
 ```
 
 ## 2. Passo a Passo de Execução
@@ -236,7 +237,7 @@ cd sim-ns3
 
 ### Passo 2: Clonagem da Versão Estável do ns-3
 
-Para assegurar estabilidade de API e evitar quebras de compatibilidade com modelos da comunidade, utiliza-se uma versão estável homologada (ex.: **ns-3.41** ou superior com suporte pleno a CMake/C++17):
+Para assegurar estabilidade de API e evitar quebras de compatibilidade com modelos da comunidade, utiliza-se uma única versão estável homologada, **ns-3.48**, fixada pelo ADR-001 (a árvore `sim-ns3/ns-3.41` é legada e não deve ser usada em campanhas):
 
 ```bash
 # 1. Clone o repositório oficial do ns-3 (versão com tags estáveis)
@@ -249,12 +250,12 @@ cd ns-3.48
 git checkout -b ns-3.48-stable tags/ns-3.48
 ```
 
-### Passo 3: Integração do Módulo LoRaWAN (`contrib/lorawan`)
+### Passo 3: Integração do Módulo LoRaWAN (`src/lorawan`)
 
 O módulo LoRaWAN modela a modulação CSS (*Chirp Spread Spectrum*), a camada MAC Classe A e a lógica de canais com perdas por colisão ortogonal e desvanecimento.
 
 ```bash
-# 1. Acesse o diretório de módulos externos/contribuição
+# 1. Acesse o diretório de módulos do ns-3 (src/), conforme ADR-001
 cd src
 
 # 2. Clone o repositório oficial do módulo LoRaWAN
@@ -265,7 +266,7 @@ cd ..
 ```
 
 * **Nota de Compatibilidade:** O módulo `lorawan` depende de bindings nativos de C++ com o núcleo do ns-3 (`core`, `network`, `mobility`, `propagation`, `energy`). 
-Ao estar localizado dentro de `contrib/`, o CMake detecta automaticamente o arquivo `contrib/lorawan/CMakeLists.txt` durante o processo de escaneamento de módulos.
+Ao estar localizado dentro de `src/`, o CMake detecta automaticamente o arquivo `src/lorawan/CMakeLists.txt` durante o processo de escaneamento de módulos. O arquivo `src/lorawan/NS3-VERSION` declara compatibilidade nominal com o ns-3.38; a compilação no ns-3.48 exige o ajuste de cabeçalho descrito no Passo 5.
 
 ### Passo 4: Configuração do Build via CMake com Gerador Ninja
 
@@ -280,8 +281,9 @@ Execute a configuração do ambiente, ativando otimizações para execução rá
     --enable-examples
 ```
 
-* **Validação do Output:** Na saída textual gerada pelo comando `./ns3 configure`, verifique o bloco **"Modules built to these directories"**. 
+* **Validação do Output:** Na saída textual gerada pelo comando `./ns3 configure`, verifique o bloco **"Modules configured to be built:"**. 
 O módulo `lorawan` deve obrigatoriamente constar na lista de **módulos habilitados** (*built modules*). 
+
 Caso apareça como *not built*, certifique-se de que a biblioteca `libgsl-dev` foi instalada no Passo 4 do guia anterior.
 
 ### Passo 5: Compilação Paralela com o ns-3 / Ninja
@@ -293,12 +295,73 @@ Dispare a compilação de toda a árvore de código-fonte. O script `./ns3` orqu
 ./ns3 build -j 4
 ```
 
-NOTA: Neste passo foi necessário realizar a inclusão da linha abaixo ao arquivo src/lorawan/model/logical-lora-channel.cc para executar novamente o comando acima.
+```markdown
+## **1. Correção proposta:** `lorawan-test-suite.cc`
 
-há uma dependência de inclusão de cabeçalho não declarada explicitamente no código do módulo.
+Acrescente os seguintes cabeçalhos ao bloco de inclusões:
 
-```text
-#include "ns3/log.h"
+#include "ns3/class-a-end-device-lorawan-mac.h"
+#include "ns3/end-device-lora-phy.h"
+#include "ns3/end-device-lorawan-mac.h"
+#include "ns3/logical-lora-channel.h"
+#include "ns3/logical-lora-channel-helper.h"
+#include "ns3/lora-channel.h"
+#include "ns3/lorawan-mac.h"
+#include "ns3/lorawan-mac-helper.h"
+#include "ns3/propagation-delay-model.h"
+#include "ns3/propagation-loss-model.h"
+#include "ns3/simple-end-device-lora-phy.h"
+#include "ns3/sub-band.h"
+
+Essas inclusões cobrem as utilizações identificadas:
+
+- `LogicalLoraChannel`, `LogicalLoraChannelHelper` e `SubBand`;
+- `LoraChannel`;
+- `SimpleEndDeviceLoraPhy` e `EndDeviceLoraPhy`;
+- `ClassAEndDeviceLorawanMac`, `EndDeviceLorawanMac` e `LorawanMac`;
+- `LorawanMacHelper`;
+- `LogDistancePropagationLossModel`;
+- `PropagationDelayModel` e `ConstantSpeedPropagationDelayModel`.
+
+O cabeçalho `class-a-end-device-lorawan-mac.h` já aparece em outro teste, mas ainda não estava incluído nesse arquivo.
+
+## **2. Correção proposta:** `utilities.cc`
+
+Esse arquivo utiliza diretamente `LorawanMacHelper` e os modelos de propagação. Embora `lora-helper.h` inclua `lorawan-mac-helper.h` internamente, é melhor declarar a dependência direta.
+
+Acrescente:
+
+#include "ns3/lorawan-mac-helper.h"
+#include "ns3/propagation-delay-model.h"
+#include "ns3/propagation-loss-model.h"
+
+O início do arquivo ficará assim:
+
+#include "utilities.h"
+
+#include "ns3/forwarder-helper.h"
+#include "ns3/lora-helper.h"
+#include "ns3/lorawan-mac-helper.h"
+#include "ns3/mobility-model.h"
+#include "ns3/network-server-helper.h"
+#include "ns3/point-to-point-helper.h"
+#include "ns3/propagation-delay-model.h"
+#include "ns3/propagation-loss-model.h"
+#include "ns3/string.h"
+
+## **3. Correção proposta:** `network-server-test-suite.cc`
+
+Esse arquivo utiliza `EndDeviceLorawanMac` explicitamente, inclusive para acessar `EndDeviceLorawanMac::ADR_ACK_LIMIT`. O cabeçalho de `ClassAEndDeviceLorawanMac` 
+ode disponibilizar a classe-base indiretamente, mas a dependência direta deve ser declarada.
+
+Acrescente:
+
+#include "ns3/end-device-lorawan-mac.h"
+
+O bloco ficará:
+
+#include "ns3/class-a-end-device-lorawan-mac.h"
+#include "ns3/end-device-lorawan-mac.h"
 ```
 
 *(O processo de compilação costuma levar entre 3 a 8 minutos, dependendo da quantidade de núcleos do processador).*
@@ -333,9 +396,9 @@ Para validar que o simulador C++ e a extensão LoRaWAN estão operacionais e vin
 A atividade **`[EP-01] - Tarefa 1.2`** é considerada **Concluída (Done)** quando:
 
 1. [x] O repositório do **ns-3.48** estiver clonado e fixado na tag estável no diretório `sim-ns3/ns-3.48/`.
-2. [x] O módulo **`lorawan`** estiver presente em `contrib/lorawan/` e integrado sem erros sintáticos de CMake.
+2. [x] O módulo **`lorawan`** estiver presente em `src/lorawan/` e integrado sem erros sintáticos de CMake.
 3. [x] A compilação completa via `./ns3 build` terminar com código de retorno `0` (sem falhas de linking ou cabeçalhos ausentes).
-4. [x] A suíte de testes `./test.py -m lorawan` for executada com sucesso, liberando o ambiente para a **Tarefa 1.3** (*Execução e validação do cenário de exemplo padrão `lora-packet-tracker.cc`*).
+4. [x] A suíte de testes `./test.py -s lorawan` for executada com sucesso, liberando o ambiente para a **Tarefa 1.3** (*Execução e validação do cenário de exemplo padrão `complete-network-example.cc`*).
 
 ## [EP-01]  - Tarefa 1.3: Executar e validar o cenário de exemplo padrão (`complete-network-example.cc`) para confirmar a compilação e a geração de traços.
 
@@ -422,16 +485,16 @@ Os parâmetros configuráveis expostos pelo executável e seus valores padrão n
 
 * `--nDevices`: Quantidade total de nós finais (*End Devices*) incluídos na simulação.  
   * *Padrão:* `200` nós.  
-  * *Uso nos ensaios:* Variado para avaliar o impacto da densidade (ex.: 50, 100, 200, 500 nós).
+  * *Uso nos ensaios:* Fator A do desenho experimental (ADR-002): 100, 250, 500, 1000 e 2000 nós.
 * `--radius`: Raio da área circular simulada em metros a partir do Gateway central.  
   * *Padrão:* `6400` metros (6,4 km).  
-  * *Uso nos ensaios:* Ajustável para testar alcance e atenuação por distância (ex.: 2000 a 6400 m).
+  * *Uso nos ensaios:* 2000 m no cenário base e 6000 m no experimento complementar E-R (ADR-002).
 * `--simulationTime`: Tempo lógico total de simulação em segundos.  
   * *Padrão:* `600` segundos (10 minutos lógicos).  
-  * *Uso nos ensaios:* Reduzido para testes rápidos (ex.: 120s ou 200s) e estendido para regimes permanentes nas campanhas completas.
+  * *Uso nos ensaios:* Reduzido para testes rápidos (ex.: 60 s) e fixado em 4200 s nas campanhas (600 s de warm-up + 3600 s de medição em regime permanente).
 * `--appPeriod`: Intervalo médio em segundos entre transmissões periódicas de pacotes por cada nó.  
   * *Padrão:* `600` segundos (1 pacote a cada 10 minutos por nó).  
-  * *Uso nos ensaios:* Variável independente de carga oferecida (ex.: 60s, 300s ou 600s).
+  * *Uso nos ensaios:* Fator C do desenho experimental (ADR-002): 60 s (carga alta) e 600 s (carga baixa).
 * `--realisticChannel`: Habilita um modelo de canal mais realista com perdas e sombreamento urbano.  
   * *Padrão:* `false` (utiliza propagação padrão em espaço livre/log-distância).  
   * *Uso nos ensaios:* Alternado para validar o comportamento sob desvanecimento mais severo.
@@ -485,7 +548,7 @@ A atividade **`[EP-01] - Tarefa 1.3`** e o **Épico 01** são considerados forma
 2. [x] O comando responder aos parâmetros via linha de comando (`--nDevices`, `--radius`, `--appPeriod`, `--simulationTime`).
 3. [x] A execução controlada for concluída sem interrupções anormais (*segmentation faults* ou *aborts*).
 4. [x] A saída padrão (`stdout`) capturada registrar o par de valores numéricos de pacotes gerados e entregues, comprovando a instrumentação do `LoraPacketTracker` e um PDR coerente com a literatura (no teste: $111/120 \rightarrow 92{,}5\%$).
-5. [x] A infraestrutura e o ambiente de software estiverem plenamente homologados, liberando o avanço formal para a **Sprint 2** (modelagem formal SDD, contratos CT-001/CT-003 e redação da Proposta Parcial de 10 páginas para o marco de 08/12/2026).
+5. [x] A infraestrutura e o ambiente de software estiverem plenamente homologados, liberando o avanço formal para a **Sprint 2** (modelagem formal SDD, contratos CT-001/CT-002/CT-003 e redação da Proposta Parcial de 10 páginas para o marco de 08/12/2026).
 
 ## [EP-02]  - Tarefa 1.4: Criar o repositório Git com a estrutura de diretórios em Arquitetura Hexagonal (`/core`, `/ports`, `/adapters`, `/sim-ns3`, `/analysis`).
 
@@ -704,6 +767,34 @@ git add src/ configs/ data/ tests/ .gitignore
 git commit -m "feat(arch): estrutura diretorios em arquitetura hexagonal (EP-02 Tarefa 1.4)"
 ```
 
+### Passo 7: Ajustes Pós-Auditoria (26/11/2026)
+
+A auditoria de conformidade da Sprint 1 identificou e corrigiu os seguintes desvios:
+
+1. **Pacote stub removido:** o diretório `src/lorawan_ns3_perf_eval/` (gerado pelo `uv init`) foi excluído; o pacote distribuível passou a ser `src`, configurado no `pyproject.toml`:
+
+```toml
+[tool.uv.build-backend]
+module-root = ""
+module-name = "src"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+```
+
+2. **Dependências reclassificadas:** `numpy`, `scipy`, `pandas`, `matplotlib`, `seaborn` e `pyyaml` em `dependencies`; ferramentas (`mypy`, `ruff`, `pytest`, `pytest-cov`, `mdformat`) no grupo `dev`.
+
+3. **`.gitignore` ampliado:** artefatos de build do ns-3 (`sim-ns3/*/build/`, `sim-ns3/*/cmake-cache/`, `sim-ns3/*/buildings.txt`, `sim-ns3/ns-3.41/`) e intermediários LaTeX (`*.aux`, `*.bbl`, `*.blg` em `docs/sbc-papers/`).
+
+4. **ADRs criados:** `docs/adr/001-versao-ns3-e-modulo-lorawan.md` (versão única ns-3.48 + lorawan 0.3.7) e `docs/adr/002-desenho-experimental.md` (fatorial unificado), além de `configs/campaigns/main_factorial.yaml`.
+
+5. **README ampliado** com estrutura, requisitos e instruções reprodutíveis.
+
+```bash
+uv lock && uv sync
+uv run pytest -q   # Resultado obtido: 1 passed
+```
+
 ## 4. Matriz de Verificação e Homologação
 
 | Verificação | Procedimento | Critério de Aceitação |
@@ -722,6 +813,7 @@ A atividade **`[EP-02] - Tarefa 1.4`** é considerada **Concluída (Done)** quan
 3. [x] O arquivo `.gitignore` estiver configurado para blindar o repositório contra dados brutos e traços pesados de simulação.
 4. [x] O comando `uv run pytest` validar a importabilidade dos pacotes.
 5. [x] O commit estiver efetuado no branch de trabalho, finalizando a parte de infraestrutura e abrindo caminho para a **Tarefa 1.5** (*Configuração do template oficial SBC no LaTeX e redação do Relatório Parcial*).
+6. [x] Os ajustes pós-auditoria (Passo 7) estiverem aplicados e publicados no `origin/main`.
 
 ## [EP-03]  - Tarefa 1.5: Configurar o template oficial da **SBC** no LaTeX e redigir o esqueleto do Relatório Parcial (Seções 1 e 2: Introdução contextualizada e Definição do Problema).
 
@@ -808,19 +900,18 @@ Crie o arquivo `referencias.bib` contendo as fontes científicas e metodológica
   year      = {2021}
 }
 
-@article{magrin2017performance,
-  author    = {Davide Magrin and Marco Centenaro and Andrea Zanella},
+@inproceedings{magrin2017performance,
+  author    = {Davide Magrin and Marco Centenaro and Lorenzo Vangelista},
   title     = {Performance Evaluation of {LoRa} Networks in a Smart City Scenario},
-  journal   = {IEEE Transactions on Wireless Communications},
-  volume    = {16},
-  number    = {12},
-  pages     = {8147--8159},
+  booktitle = {Proceedings of the IEEE International Conference on Communications (ICC)},
+  address   = {Paris, France},
+  pages     = {1--7},
   year      = {2017},
   publisher = {IEEE}
 }
 
 @article{adelantado2017understanding,
-  author    = {Ferran Adelantado and Xavier Vilajosana and Pere Tuset-Peiro and Borja Martinez and Joan Meli{\a}-Segu{\'\i} and Thomas Watteyne},
+  author    = {Ferran Adelantado and Xavier Vilajosana and Pere Tuset-Peiro and Borja Martinez and Joan Meli{\`a}-Segu{\'\i} and Thomas Watteyne},
   title     = {Understanding the Limits of {LoRaWAN}},
   journal   = {IEEE Communications Magazine},
   volume    = {55},
@@ -830,7 +921,7 @@ Crie o arquivo `referencias.bib` contendo as fontes científicas e metodológica
   publisher = {IEEE}
 }
 
-@article{bor2016lora,
+@inproceedings{bor2016lora,
   author    = {Martin Bor and Utz Roedig and Thiemo Voigt and Juan M. Alonso},
   title     = {Do {LoRa} Low-Power Wide-Area Networks Scale?},
   booktitle = {Proceedings of the 19th ACM International Conference on Modeling, Analysis and Simulation of Wireless and Mobile Systems (MSWiM)},
@@ -917,8 +1008,8 @@ Além disso, transmissões concorrentes no mesmo canal e no mesmo SF colidem fat
 \subsection{Questões de Pesquisa (QP)}
 A formulação do problema traduz-se nas seguintes questões científicas investigadas neste estudo:
 \begin{itemize}
-    \item \textbf{QP-01:} Em que ponto de densidade de dispositivos (100 a 2000 nós) o mecanismo ALOHA do LoRaWAN atinge o colapso de vazão e degradação crítica da Taxa de Entrega de Pacotes (PDR)?
-    \item \textbf{QP-02:} De que maneira a alocação dinâmica de SF através de algoritmos de ADR atenua ou agrava o número de colisões co-canal em comparação com uma distribuição uniforme estática de SFs?
+    \item \textbf{QP-01:} Em que ponto de densidade de dispositivos (100 a 2000 nós por gateway, em célula de 2~km) o mecanismo ALOHA do LoRaWAN atinge o colapso de vazão e degradação crítica da Taxa de Entrega de Pacotes (PDR)?
+    \item \textbf{QP-02:} De que maneira a alocação de SF --- aleatória uniforme (SF7 a SF12), estática por orçamento de enlace e dinâmica via ADR --- atenua ou agrava o número de colisões co-canal e o PDR agregado?
     \item \textbf{QP-03:} Qual é o impacto isolado da restrição regulatória de \textit{duty cycle} (1\%) na ocorrência de descartes locais na fila MAC dos transmissores sob tráfego periódico contínuo?
     \item \textbf{QP-04:} Como se comportam os índices de equidade de acesso à rede (\textit{Jain's Fairness Index}) entre nós localizados no raio interno da célula frente aos nós de borda?
 \end{itemize}
@@ -926,8 +1017,8 @@ A formulação do problema traduz-se nas seguintes questões científicas invest
 \subsection{Hipóteses Experimentais}
 Com base no arcabouço quantitativo de Raj Jain \cite{jain1991art}, este estudo formula as seguintes hipóteses de trabalho a serem validadas experimentalmente no ns-3:
 \begin{itemize}
-    \item \textbf{Hipótese $H_1$:} A taxa de entrega de pacotes ($\mathrm{PDR}$) decresce de forma exponencial com o aumento linear da densidade de dispositivos finais sob alocação aleatória de SF, estabilizando-se em patamares inferiores a 40\% para populações superiores a 1000 nós em raio de 2~km.
-    \item \textbf{Hipótese $H_2$:} A utilização de estratégias dinâmicas de alocação baseadas na intensidade do sinal recebido (RSSI/ADR) promove um ganho estatisticamente significativo ($\alpha = 0{,}05$) de ao menos 20 pontos percentuais no PDR agregado em relação à alocação uniforme, decorrente do confinamento da maioria dos nós em fatores de espalhamento de baixo tempo no ar (SF7 e SF8).
+    \item \textbf{Hipótese $H_1$:} Sob alocação aleatória de SF, a taxa de entrega de pacotes ($\mathrm{PDR}$) decresce de forma não linear com o aumento da densidade de dispositivos finais, com degradação acentuada acima de 1000 nós em raio de 2~km.
+    \item \textbf{Hipótese $H_2$:} A alocação dinâmica via ADR promove ganho estatisticamente significativo ($\alpha = 0{,}05$, teste $t$ pareado) no PDR agregado em relação à alocação aleatória uniforme, decorrente do confinamento da maioria dos nós em fatores de espalhamento de baixo tempo no ar (SF7 e SF8).
     \item \textbf{Hipótese $H_3$:} A conformidade estrita com o limite de 1\% de \textit{duty cycle} introduz uma taxa de descarte determinística por esgotamento de janela de tempo que mascara as perdas puramente atribuídas a colisões no canal de rádio.
 \end{itemize}
 
@@ -1018,13 +1109,13 @@ A atividade **`[EP-03] - Tarefa 1.5`** e a **Sprint 1 (23/11 a 29/11/2026)** est
 4. [x] **[EP-02]** Repositório Git estruturado nas camadas de Arquitetura Hexagonal (`core/`, `ports/`, `adapters/`, `configs/`, `data/`, `tests/`) com teste de fumaça aprovado no `pytest`.
 5. [x] **[EP-03]** Template oficial da SBC configurado em LaTeX, com o arquivo BibTeX populado e as **Seções 1 e 2 integralmente redigidas e compiladas no PDF**.
 
-Com isso, a **Sprint 1 está 100% finalizada**. Na **Sprint 2 (30/11 a 07/12/2026)**, os próximos passos consistem em:
+Com isso, a **Sprint 1 está 100% finalizada**. Na **Sprint 2 (30/11 a 07/12/2026)**, especificada em detalhe em `docs/md/sprint02.md`, os próximos passos consistem em:
 
-1. Formalizar a especificação técnica central (`docs/sdd-lorawan.md`) com os contratos CT-001 e CT-003.
+1. Formalizar a especificação técnica central (`docs/sdd-lorawan.md`) com os contratos CT-001, CT-002 e CT-003, derivados do desenho experimental do ADR-002.
 
-2. Redigir a Seção 3 (Revisão Bibliográfica) e a Seção 4 (Metodologia segundo Raj Jain) no LaTeX.
+2. Redigir a Seção 3 (Revisão Bibliográfica) e a Seção 4 (Metodologia segundo Raj Jain) no LaTeX, incluindo as figuras de topologia e de arquitetura hexagonal.
 
-3. Ajustar a densidade de texto e figuras para fechar **rigorosamente as 10 páginas do Relatório Parcial** para a entrega de **08/12/2026**.
+3. Revisar texto e bibliografia e ajustar a densidade de conteúdo para fechar **rigorosamente as 10 páginas do Relatório Parcial** para a entrega de **08/12/2026**.
 
 * **Entregável da Sprint:** Simulador compilado e executando; template LaTeX SBC estruturado; repositório configurado.
 

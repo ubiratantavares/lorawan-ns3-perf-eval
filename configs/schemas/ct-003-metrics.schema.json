@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ct-003-metrics.schema.json",
+  "title": "CT-003 - Metricas Brutas de Saida (CSV)",
+  "type": "object",
+  "properties": {
+    "packets_csv": {
+      "const": [
+        {"name": "timestamp_s",      "type": "number",  "constraints": {"minimum": 0}},
+        {"name": "packet_id",        "type": "integer", "constraints": {"minimum": 0}},
+        {"name": "node_id",          "type": "integer", "constraints": {"minimum": 0}},
+        {"name": "gateway_id",       "type": "integer", "constraints": {"minimum": -1}},
+        {"name": "distance_m",       "type": "number",  "constraints": {"minimum": 0}},
+        {"name": "channel_hz",       "type": "number"},
+        {"name": "spreading_factor", "type": "integer", "constraints": {"minimum": 7, "maximum": 12}},
+        {"name": "tx_power_dbm",     "type": "number"},
+        {"name": "rssi_dbm",         "type": "number",  "nullable": true},
+        {"name": "snr_db",           "type": "number",  "nullable": true},
+        {"name": "status",           "type": "string",
+         "constraints": {"enum": ["SUCCESS", "COLLISION", "UNDER_SENSITIVITY",
+                                  "NO_MORE_RECEIVERS", "GW_TX_BUSY", "DUTY_CYCLE_BLOCKED"]}}
+      ]
+    },
+    "nodes_csv": {
+      "const": [
+        {"name": "node_id",           "type": "integer", "constraints": {"minimum": 0}},
+        {"name": "distance_m",        "type": "number",  "constraints": {"minimum": 0}},
+        {"name": "sf_initial",        "type": "integer", "constraints": {"minimum": 7, "maximum": 12}},
+        {"name": "sf_final",          "type": "integer", "constraints": {"minimum": 7, "maximum": 12}},
+        {"name": "packets_generated", "type": "integer", "constraints": {"minimum": 0}},
+        {"name": "energy_j",          "type": "number",  "constraints": {"minimum": 0}}
+      ]
+    }
+  }
+}

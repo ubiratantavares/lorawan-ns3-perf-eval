@@ -86,9 +86,9 @@ O cronograma cobre o período de **23/11/2026 a 25/01/2027**, distribuído em **
 
 * **Backlog da Sprint:**
 
-  1. *[EP-04]* Implementar classes de domínio em C++ seguindo SOLID: `LoraMacProtocolDecorator` e `DutyCycleEnforcer` para controle regulatório de transmissão (1% de ocupação do canal).
+  1. *[EP-04]* Implementar classes de domínio em C++ seguindo SOLID: `DutyCycleEnforcer` como camada de instrumentação e configuração do controle regulatório nativo do módulo (1% por sub-banda, trace `CannotSendBecauseDutyCycle`), com opção de desabilitá-lo para o experimento E-DC.
 
-  2. *[EP-04]* Construir a interface `ISpreadingFactorAllocationStrategy` (OCP) para permitir alternar entre alocação estática de SF (SF7 a SF12) e algoritmos dinâmicos (ADR).
+  2. *[EP-04]* Construir a interface `ISpreadingFactorAllocationStrategy` (OCP) com as implementações `RANDOM`, `DISTANCE`, `ADR` e `FIXED_SF12` (degenerado), encapsulando `SetSpreadingFactorsGivenDistribution`, `SetSpreadingFactorsUp` e `AdrComponent`.
 
   3. *[EP-04]* Instrumentar a subcamada de rastreamento de eventos PHY/MAC para exportar colisões por co-canal, perdas por sensibilidade e chegadas bem-sucedidas no Gateway via callbacks do ns-3.
 
@@ -114,11 +114,11 @@ O cronograma cobre o período de **23/11/2026 a 25/01/2027**, distribuído em **
 
 * **Backlog da Sprint:**
 
-  1. *[EP-05]* Configurar a topologia experimental: 1 Gateway central e nós finais distribuídos em anéis concêntricos (raio de 1 km a 6 km com modelo de perda de percurso log-normal).
+  1. *[EP-05]* Configurar a topologia experimental base: 1 Gateway central, raio de 2 km (6 km no experimento E-R), EU868 com 3 canais, payload de 20 bytes e modelo de perda de percurso log-normal.
 
-  2. *[EP-05]* Executar testes preliminares de tráfego para verificar a duração mínima necessária de simulação para estabilização das filas e dos estados de colisão.
+  2. *[EP-05]* Executar testes preliminares de tráfego e os testes degenerados (SF12 fixo, 1 nó, 5 nós a 100 m) para verificar a duração mínima de simulação (alvo: 10 min de warm-up + ≥ 1 h de medição).
 
-  3. *[EP-05]* Implementar no pipeline Python o truncamento inicial de dados transitórios (*warm-up period deletion*), garantindo que apenas métricas em regime permanente (*steady-state*) sejam coletadas.
+  3. *[EP-05]* Implementar no pipeline Python o truncamento dos 10 minutos iniciais (*warm-up period deletion*), garantindo que apenas métricas em regime permanente (*steady-state*) sejam coletadas.
 
 * **Entregável da Sprint:** Cenário base validado tecnicamente, sem erros de inicialização e pronto para execuções massivas.
 
@@ -128,15 +128,17 @@ O cronograma cobre o período de **23/11/2026 a 25/01/2027**, distribuído em **
 
 * **Backlog da Sprint:**
 
-  1. *[EP-05]* Automatizar a matriz experimental fatorial:
+  1. *[EP-05]* Automatizar a matriz experimental (ADR-002, `configs/campaigns/main_factorial.yaml`):
 
-     * Fator A: Densidade de dispositivos (100, 500, 1000, 2000 nós).
+     * Fator A: Densidade de dispositivos (100, 250, 500, 1000, 2000 nós).
 
-     * Fator B: Carga oferecida / Intervalo de envio (pacotes a cada 60s, 300s e 600s).
+     * Fator B: Estratégia de Fator de Espalhamento (`RANDOM`, `DISTANCE`, `ADR`).
 
-     * Fator C: Estratégia de Fator de Espalhamento (Alocação Fixo-Uniforme vs. ADR Dinâmico).
+     * Fator C: Período de envio (60 s e 600 s).
 
-  2. *[EP-05]* Configurar o pipeline para executar no mínimo **30 replicações independentes** por ponto experimental, iterando sobre `RngRun` e fixando `RngSeed` para assegurar reprodutibilidade total.
+     * Complementares: E-DC (duty cycle on/off, ADR, 60 s) e E-R (raio de 6 km, DISTANCE/ADR, 600 s).
+
+  2. *[EP-05]* Configurar o pipeline para executar **30 replicações independentes** por ponto (45 pontos, 1350 execuções), iterando `RngRun = 1..30` e fixando `RngSeed = 1`.
 
   3. *[EP-05]* Monitorar e consolidar os arquivos brutos de saída em diretório protegido contra sobrescrita acidental.
 
@@ -152,11 +154,13 @@ O cronograma cobre o período de **23/11/2026 a 25/01/2027**, distribuído em **
 
      * **HB (*Higher is Better*):** Taxa de Entrega de Pacotes (PDR) e Vazão Global (*Throughput*).
 
-     * **LB (*Lower is Better*):** Atraso fim a fim e Energia gasta por pacote entregue com sucesso.
+     * **LB (*Lower is Better*):** Atraso fim a fim, Energia gasta por pacote entregue com sucesso, Taxa de colisão e Descartes por duty cycle.
+
+     * **Equidade:** Jain's Fairness Index (JFI) do PDR por nó, estratificado por distância ao gateway.
 
   2. *[EP-06]* Computar média amostral, variância e **intervalos de confiança de 95%** para todas as métricas em cada nível fatorial.
 
-  3. *[EP-06]* Aplicar o **teste \\(t\\) pareado** para comparar o ganho estatístico de desempenho obtido pelo algoritmo ADR frente à alocação aleatória de SF.
+  3. *[EP-06]* Aplicar o **teste \\(t\\) pareado** (mesmo `RngRun`, α = 0,05) para comparar o ganho do ADR frente à alocação aleatória (`RANDOM`) de SF (H2), e duty cycle on × off (H3).
 
 * **Entregável da Sprint:** Módulo Python gerando relatórios estatísticos tabulados e consolidados com significância matemática comprovada.
 

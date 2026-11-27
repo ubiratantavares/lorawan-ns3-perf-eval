@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ct-001-scenario.schema.json",
+  "title": "CT-001 - Cenario de Simulacao LoRaWAN",
+  "description": "Parametros de uma unica execucao do ns-3 (ponto experimental x replicacao).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "scenario_id", "duration_seconds", "warmup_seconds",
+               "topology", "lora_settings", "traffic", "stochastic"],
+  "properties": {
+    "contract_version": { "const": "1.0" },
+    "scenario_id": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+    "duration_seconds": { "type": "number", "exclusiveMinimum": 0 },
+    "warmup_seconds": { "type": "number", "minimum": 0 },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["radius_m", "n_gateways", "n_devices"],
+      "properties": {
+        "radius_m": { "type": "number", "minimum": 100, "maximum": 10000 },
+        "n_gateways": { "type": "integer", "minimum": 1 },
+        "n_devices": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "lora_settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["region", "n_channels", "sf_strategy", "duty_cycle_enabled"],
+      "properties": {
+        "region": { "enum": ["EU868"] },
+        "n_channels": { "type": "integer", "minimum": 1, "maximum": 16 },
+        "sf_strategy": { "enum": ["RANDOM", "DISTANCE", "ADR", "FIXED_SF12"] },
+        "duty_cycle_enabled": { "type": "boolean" },
+        "realistic_channel": { "type": "boolean", "default": false }
+      }
+    },
+    "traffic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app_period_s", "payload_bytes"],
+      "properties": {
+        "app_period_s": { "type": "number", "exclusiveMinimum": 0 },
+        "payload_bytes": { "type": "integer", "minimum": 1, "maximum": 222 }
+      }
+    },
+    "stochastic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rng_seed", "rng_run"],
+      "properties": {
+        "rng_seed": { "type": "integer", "minimum": 1 },
+        "rng_run": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

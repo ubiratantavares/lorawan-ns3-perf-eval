@@ -1,0 +1,21 @@
+# Instancia de referencia do CT-001 (cenario base do ADR-002)
+contract_version: "1.0"
+scenario_id: base_n100_adr_p600_r01
+duration_seconds: 4200        # 600 s de warm-up + 3600 s de medicao
+warmup_seconds: 600
+topology:
+  radius_m: 2000
+  n_gateways: 1
+  n_devices: 100
+lora_settings:
+  region: EU868
+  n_channels: 3
+  sf_strategy: ADR
+  duty_cycle_enabled: true
+  realistic_channel: false
+traffic:
+  app_period_s: 600
+  payload_bytes: 20
+stochastic:
+  rng_seed: 1
+  rng_run: 1

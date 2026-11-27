@@ -1,0 +1,5 @@
+timestamp_s,packet_id,node_id,gateway_id,distance_m,channel_hz,spreading_factor,tx_power_dbm,rssi_dbm,snr_db,status
+612.40,0,3,0,845.2,868100000,7,14,-98.3,6.1,SUCCESS
+615.02,1,7,0,1720.9,868300000,10,14,-121.7,-9.4,COLLISION
+620.88,2,9,0,1985.0,868500000,12,14,-138.2,-21.0,UNDER_SENSITIVITY
+633.10,3,3,-1,845.2,868100000,7,14,,,DUTY_CYCLE_BLOCKED

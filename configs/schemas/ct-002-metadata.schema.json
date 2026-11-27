@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ct-002-metadata.schema.json",
+  "title": "CT-002 - Metadados de Execucao",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "scenario_id", "campaign_id", "rng_seed", "rng_run",
+               "ns3_version", "lorawan_version", "git_commit", "git_dirty",
+               "scenario_sha256", "started_at", "finished_at", "wall_clock_s", "exit_code"],
+  "properties": {
+    "contract_version": { "const": "1.0" },
+    "scenario_id": { "type": "string" },
+    "campaign_id": { "type": "string" },
+    "rng_seed": { "type": "integer", "minimum": 1 },
+    "rng_run": { "type": "integer", "minimum": 1 },
+    "ns3_version": { "const": "3.48" },
+    "lorawan_version": { "const": "0.3.7" },
+    "git_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "git_dirty": { "type": "boolean" },
+    "scenario_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "wall_clock_s": { "type": "number", "minimum": 0 },
+    "exit_code": { "type": "integer" },
+    "host": {
+      "type": "object",
+      "properties": {
+        "os": { "type": "string" },
+        "cpu_count": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

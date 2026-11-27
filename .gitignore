@@ -265,3 +265,7 @@ docs/sbc-papers/**/*.out
 docs/sbc-papers/**/*.toc
 docs/sbc-papers/**/*.fls
 docs/sbc-papers/**/*.fdb_latexmk
+
+
+# Simulador ns-3 e seus módulos externos
+/sim-ns3/

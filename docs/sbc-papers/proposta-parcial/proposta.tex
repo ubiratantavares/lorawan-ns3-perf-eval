@@ -64,8 +64,8 @@ Além disso, transmissões concorrentes no mesmo canal e no mesmo SF colidem fat
 \subsection{Questões de Pesquisa (QP)}
 A formulação do problema traduz-se nas seguintes questões científicas investigadas neste estudo:
 \begin{itemize}
-    \item \textbf{QP-01:} Em que ponto de densidade de dispositivos (100 a 2000 nós) o mecanismo ALOHA do LoRaWAN atinge o colapso de vazão e degradação crítica da Taxa de Entrega de Pacotes (PDR)?
-    \item \textbf{QP-02:} De que maneira a alocação dinâmica de SF através de algoritmos de ADR atenua ou agrava o número de colisões co-canal em comparação com uma distribuição uniforme estática de SFs?
+    \item \textbf{QP-01:} Em que ponto de densidade de dispositivos (100 a 2000 nós por gateway, em célula de 2~km) o mecanismo ALOHA do LoRaWAN atinge o colapso de vazão e degradação crítica da Taxa de Entrega de Pacotes (PDR)?
+    \item \textbf{QP-02:} De que maneira a alocação de SF --- aleatória uniforme (SF7 a SF12), estática por orçamento de enlace e dinâmica via ADR --- atenua ou agrava o número de colisões co-canal e o PDR agregado?
     \item \textbf{QP-03:} Qual é o impacto isolado da restrição regulatória de \textit{duty cycle} (1\%) na ocorrência de descartes locais na fila MAC dos transmissores sob tráfego periódico contínuo?
     \item \textbf{QP-04:} Como se comportam os índices de equidade de acesso à rede (\textit{Jain's Fairness Index}) entre nós localizados no raio interno da célula frente aos nós de borda?
 \end{itemize}
@@ -73,8 +73,8 @@ A formulação do problema traduz-se nas seguintes questões científicas invest
 \subsection{Hipóteses Experimentais}
 Com base no arcabouço quantitativo de Raj Jain \cite{jain1991art}, este estudo formula as seguintes hipóteses de trabalho a serem validadas experimentalmente no ns-3:
 \begin{itemize}
-    \item \textbf{Hipótese $H_1$:} A taxa de entrega de pacotes ($\mathrm{PDR}$) decresce de forma exponencial com o aumento linear da densidade de dispositivos finais sob alocação aleatória de SF, estabilizando-se em patamares inferiores a 40\% para populações superiores a 1000 nós em raio de 2~km.
-    \item \textbf{Hipótese $H_2$:} A utilização de estratégias dinâmicas de alocação baseadas na intensidade do sinal recebido (RSSI/ADR) promove um ganho estatisticamente significativo ($\alpha = 0{,}05$) de ao menos 20 pontos percentuais no PDR agregado em relação à alocação uniforme, decorrente do confinamento da maioria dos nós em fatores de espalhamento de baixo tempo no ar (SF7 e SF8).
+    \item \textbf{Hipótese $H_1$:} Sob alocação aleatória de SF, a taxa de entrega de pacotes ($\mathrm{PDR}$) decresce de forma não linear com o aumento da densidade de dispositivos finais, com degradação acentuada acima de 1000 nós em raio de 2~km.
+    \item \textbf{Hipótese $H_2$:} A alocação dinâmica via ADR promove ganho estatisticamente significativo ($\alpha = 0{,}05$, teste $t$ pareado) no PDR agregado em relação à alocação aleatória uniforme, decorrente do confinamento da maioria dos nós em fatores de espalhamento de baixo tempo no ar (SF7 e SF8).
     \item \textbf{Hipótese $H_3$:} A conformidade estrita com o limite de 1\% de \textit{duty cycle} introduz uma taxa de descarte determinística por esgotamento de janela de tempo que mascara as perdas puramente atribuídas a colisões no canal de rádio.
 \end{itemize}
 

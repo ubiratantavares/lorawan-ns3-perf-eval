@@ -1,3 +1,4 @@
+
 [project]
 name = "lorawan-ns3-perf-eval"
 version = "0.1.0"
@@ -8,6 +9,7 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
+    "jsonschema>=4.26.0",
     "matplotlib",
     "numpy",
     "pandas",
@@ -20,20 +22,91 @@ dependencies = [
 requires = ["uv_build>=0.13.9,<0.14.0"]
 build-backend = "uv_build"
 
-# Os pacotes hexagonais vivem em src/{core,ports,adapters}; o pacote
-# distribuível é "src", mantendo os imports `src.core`, `src.ports`, `src.adapters`.
+# Os pacotes hexagonais vivem em src/{core,ports,adapters}.
+# O pacote distribuível é "src", mantendo os imports:
+# src.core, src.ports e src.adapters.
 [tool.uv.build-backend]
 module-root = ""
 module-name = "src"
 
 [dependency-groups]
 dev = [
+    "hypothesis",
     "mdformat",
     "mypy",
     "pytest",
     "pytest-cov",
+    "pytest-mock",
+    "pytest-xdist",
     "ruff",
+    "types-jsonschema>=4.26.0.20261006",
+    "types-pyyaml>=6.0.12.20261122",
 ]
+
+# --------------------------------------------------
+# Pytest - testes automatizados e cobertura
+# --------------------------------------------------
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--strict-config",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-fail-under=80",
+]
+
+# --------------------------------------------------
+# Ruff - lint e formatação
+# --------------------------------------------------
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+force-exclude = true
+
+extend-exclude = [
+    "sim-ns3",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "F",      # Pyflakes
+    "W",      # pycodestyle warnings
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# --------------------------------------------------
+# Mypy - verificação estática de tipos
+# --------------------------------------------------
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+mypy_path = "src"
+
+exclude = [
+    "^sim-ns3/",
+]
+
+# --------------------------------------------------
+# mdformat - padronização Markdown
+# --------------------------------------------------
+
+[tool.mdformat]
+wrap = "88"

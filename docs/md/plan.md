@@ -46,13 +46,13 @@ No ecossistema ns-3, o suporte a LoRaWAN é provido pelo módulo aberto de pesqu
 
 2.2 Lacunas Técnicas a Serem Implementadas pelo Projeto
 
-Conforme exigido pelo escopo do trabalho, os componentes e comportamentos não implementados nativamente na distribuição base do ns-3 serão construídos pelo projeto:
+Conforme exigido pelo escopo do trabalho, os componentes e comportamentos não implementados nativamente na distribuição base do ns-3 serão construídos pelo projeto (ver ADR-002):
 
-1. Algoritmos Avançados de Alocação de Taxa e Fator de Espalhamento (ADR Customizado): Extensão do Adaptive Data Rate para ambientes dinâmicos com interferência massiva.
+1. Estratégias de Alocação de Fator de Espalhamento: o módulo `lorawan` 0.3.7 já oferece alocação por distribuição (`SetSpreadingFactorsGivenDistribution`, usada para SF fixo e aleatório), estática por orçamento de enlace (`SetSpreadingFactorsUp`) e ADR dinâmico (`AdrComponent`). O projeto encapsula essas opções sob a interface `ISpreadingFactorAllocationStrategy` e distingue explicitamente alocação estática por RSSI/distância (`DISTANCE`) de ADR dinâmico (`ADR`).
 
-2. Camada de Suporte a Classes B e C: Modelagem de beacons periódicos para janelas sincronizadas de recepção (Classe B) e escuta contínua (Classe C) para atuadores.
+2. Camada de Suporte a Classes B e C: Modelagem de beacons periódicos para janelas sincronizadas de recepção (Classe B) e escuta contínua (Classe C) para atuadores. *(Fora do escopo das campanhas; trabalho futuro.)*
 
-3. Mecanismo de Descarte por Duty Cycle Regulatório: Controle determinístico de ocupação de canal em conformidade com as normas regulatórias (ex.: limite de 1% de tempo de ocupação no ar por sub-banda).
+3. Instrumentação do Duty Cycle Regulatório: o controle de 1% por sub-banda já existe no módulo (`SubBand`, trace `CannotSendBecauseDutyCycle`). O projeto não o reimplementa: instrumenta os descartes e permite desabilitá-lo para isolar seu efeito (experimento E-DC).
 
 4. Instrumentação Desacoplada de Métricas: Sistema de tracing e exportação estruturada de eventos das camadas MAC e PHY em formato padronizado (JSON e CSV), viabilizando rastreabilidade experimental completa.
 
@@ -116,7 +116,7 @@ Para garantir desacoplamento absoluto entre o orquestrador em Python e o motor e
 
 * CT-003 (Métricas Brutas de Saída - CSV):
 
-  * Colunas padronizadas: timestamp, node_id, gateway_id, channel, spreading_factor, rssi_dbm, snr_db, status (SUCCESS, COLLISION, UNDER_SENSITIVITY).
+  * Colunas padronizadas: verifique a referência `./docs/md/sdd-lorawan.md §5`
 
 4. Arquitetura de Software: POO, SOLID, Clean Code e Arquitetura Hexagonal
 
@@ -184,19 +184,35 @@ O planejamento experimental e a análise de resultados apoiam-se rigorosamente n
 
   * Jain's Fairness Index (JFI): Avaliação da equidade de acesso ao canal entre nós situados em distâncias heterogêneas do gateway.
 
-5.2 Fatores Experimentais e Tratamento Estatístico
+* Métrica de Diagnóstico:
 
-* Fatores e Níveis:
+  * Descartes por Duty Cycle: Proporção de pacotes não transmitidos por esgotamento da janela regulatória (trace `CannotSendBecauseDutyCycle`).
 
-  1. Densidade de Nós: 50, 100, 200, 500 e 1000 End Devices.
+5.2 Fatores Experimentais e Tratamento Estatístico (ver ADR-002)
 
-  2. Estratégia de Fator de Espalhamento: Alocação fixa (SF12), alocação aleatória e alocação dinâmica baseada em RSSI (ADR).
+* Fatorial Completo Principal (5 × 3 × 2 = 30 pontos):
 
-  3. Raio da Célula: 2 km (área urbana densa) e 6 km (área suburbana).
+  1. Fator A — Densidade de Nós: 100, 250, 500, 1000 e 2000 End Devices.
 
-* Tratamento de Transientes e Parada: Descarte do período de inicialização (warm-up phase) de 10 minutos para garantir medições em regime estacionário (steady-state).
+  2. Fator B — Estratégia de Fator de Espalhamento: `RANDOM` (uniforme SF7–SF12), `DISTANCE` (estática por orçamento de enlace) e `ADR` (dinâmica no Network Server).
 
-* Replicações e Confiança: Realização de no mínimo 30 replicações estocásticas independentes por ponto experimental, reportando a média amostral acompanhada de barras de erro com intervalo de confiança de 95% baseado na distribuição t de Student.
+  3. Fator C — Período de Envio: 60 s (carga alta) e 600 s (carga baixa).
+
+* Parâmetros Fixos do Cenário Base: raio de 2 km, 1 gateway central, EU868 com 3 canais, payload de 20 bytes, duty cycle de 1% habilitado.
+
+* Experimentos Complementares (um fator por vez):
+
+  * E-DC (H3/QP-03): duty cycle ligado vs. desligado, com B = ADR e C = 60 s, para todos os níveis de A (5 pontos).
+
+  * E-R (sensibilidade ao raio): raio de 6 km, com B ∈ {DISTANCE, ADR} e C = 600 s, para todos os níveis de A (10 pontos).
+
+* Testes Degenerados de Validação (Jain, cap. 25): SF12 fixo para todos os nós; 1 nó isolado (PDR ≈ 100%); 5 nós a 100 m do gateway.
+
+* Tratamento de Transientes e Parada: Descarte do período de inicialização (warm-up phase) de 10 minutos; tempo de medição em regime permanente de no mínimo 1 hora simulada (≥ 3 × período de envio).
+
+* Replicações e Confiança: `RngSeed = 1` fixo e `RngRun = 1..30` (30 replicações independentes por ponto), reportando a média amostral com IC de 95% (t de Student). Comparação ADR × RANDOM por teste t pareado (mesmo `RngRun`, α = 0,05).
+
+* Custo Computacional: 45 pontos × 30 replicações = 1350 execuções, paralelizáveis via multiprocessing.
 
 6. Planejamento Editorial: Estruturação dos Relatórios SBC
 

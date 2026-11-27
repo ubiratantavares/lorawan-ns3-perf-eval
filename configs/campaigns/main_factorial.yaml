@@ -1,0 +1,33 @@
+# Matriz experimental principal (ADR-002). Cada combinacao + rng_run gera uma instancia CT-001.
+campaign_id: main_factorial
+contract_version: "1.0"
+
+base_scenario:                  # CT-001 parcial (campos comuns a todos os pontos)
+  duration_seconds: 4200
+  warmup_seconds: 600
+  topology: {radius_m: 2000, n_gateways: 1}
+  lora_settings: {region: EU868, n_channels: 3, duty_cycle_enabled: true, realistic_channel: false}
+  traffic: {payload_bytes: 20}
+
+stochastic:
+  rng_seed: 1
+  rng_runs: {first: 1, last: 30}
+
+factors:                        # fatorial completo 5 x 3 x 2 = 30 pontos
+  - {name: n_devices,   path: topology.n_devices,       levels: [100, 250, 500, 1000, 2000]}
+  - {name: sf_strategy, path: lora_settings.sf_strategy, levels: [RANDOM, DISTANCE, ADR]}
+  - {name: app_period_s, path: traffic.app_period_s,    levels: [60, 600]}
+
+complementary:
+  - id: E-DC                    # 5 pontos (H3 / QP-03)
+    overrides: {lora_settings.sf_strategy: ADR, traffic.app_period_s: 60, lora_settings.duty_cycle_enabled: false}
+    vary: [n_devices]
+  - id: E-R                     # 10 pontos (sensibilidade ao raio)
+    overrides: {topology.radius_m: 6000, traffic.app_period_s: 600}
+    vary: [n_devices]
+    levels: {sf_strategy: [DISTANCE, ADR]}
+
+degenerate_tests:               # validacao (Jain, cap. 25)
+  - {id: D-SF12,   overrides: {topology.n_devices: 100, lora_settings.sf_strategy: FIXED_SF12, traffic.app_period_s: 600}}
+  - {id: D-SINGLE, overrides: {topology.n_devices: 1,   lora_settings.sf_strategy: DISTANCE,   traffic.app_period_s: 600}}
+  - {id: D-NEAR,   overrides: {topology.n_devices: 5,   lora_settings.sf_strategy: DISTANCE,   traffic.app_period_s: 600, topology.radius_m: 100}}
